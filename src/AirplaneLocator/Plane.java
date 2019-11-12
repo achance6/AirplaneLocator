@@ -146,7 +146,7 @@ public class Plane {
                 String callSign = (String) states[i][1];
                 String originCountry = (String) states[i][2];
                 Double geometricAltitude = Double.parseDouble(states[i][13].toString());
-                Double geodesicDistance = euclideanDistance(userLatitude, userLongitude, latitude, longitude);
+                Double geodesicDistance = euclideanDistance(userLatitude, userLongitude, latitude, longitude, geometricAltitude);
                 String ICAO24ID = (String) states[i][0];
                 plane = new Plane(latitude, longitude, geometricAltitude, originCountry, ICAO24ID, callSign,  geodesicDistance, (boolean) states[i][8]);
             }
@@ -203,8 +203,8 @@ public class Plane {
     }
 
     //Computes euclidean distance between two pairs of coordinates
-    private static double euclideanDistance(double origLat, double origLong, double destLat, double destLong) {
-        return Math.sqrt(Math.pow((origLat - destLat), 2) + Math.pow((origLong - destLong), 2));
+    private static double euclideanDistance(double origLat, double origLong, double destLat, double destLong, double altitude) {
+        return Math.sqrt(Math.pow((origLat - destLat), 2) + Math.pow((origLong - destLong), 2) + Math.pow((altitude), 2));
     }
 
 }
