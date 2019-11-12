@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -63,7 +64,7 @@ public class Plane {
         this.originCountry = originCountry;
         this.ICAO24ID = ICAO24ID;
         this.callSign = callSign;
-        this.geodesicDistance = geodesicDistance;
+        this.EuclideanDistance = geodesicDistance;
         this.grounded = grounded;
     }
 
@@ -95,7 +96,7 @@ public class Plane {
     private Double geometricAltitude;
     private String originCountry;
     private String ICAO24ID;
-    private Double geodesicDistance;
+    private Double EuclideanDistance;
     private boolean grounded;
 
     /**
@@ -106,9 +107,6 @@ public class Plane {
     @Override
     public String toString() {
         String string = "";
-        if (!(this.geodesicDistance > -0.0001 && this.geodesicDistance < 0.0001)) {
-            string += "Geodesic Distance: " + Math.floor(geodesicDistance * 1000) / 1000 + " units\n";
-        }
         string += "Callsign: " + this.callSign + "\n";
         string += "Latitude: " + this.latitude + " Longitude: " + this.longitude + "\n";
         string += "Geometric Altitude: " + this.geometricAltitude + "m\n";
@@ -143,14 +141,14 @@ public class Plane {
             Object[][] states = jsonPlane.getStates();
             Plane plane;
             try {
-                double latitude = Double.parseDouble(states[i][5].toString());
-                double longitude = Double.parseDouble(states[i][6].toString());
+                double longitude = (double) states[i][5];
+                double latitude = (double) states[i][6];
                 String callSign = (String) states[i][1];
                 String originCountry = (String) states[i][2];
                 Double geometricAltitude = Double.parseDouble(states[i][13].toString());
                 Double geodesicDistance = euclideanDistance(userLatitude, userLongitude, latitude, longitude);
                 String ICAO24ID = (String) states[i][0];
-                plane = new Plane(latitude, longitude,geometricAltitude, originCountry, ICAO24ID, callSign,  geodesicDistance, (boolean) states[i][8]);
+                plane = new Plane(latitude, longitude, geometricAltitude, originCountry, ICAO24ID, callSign,  geodesicDistance, (boolean) states[i][8]);
             }
             catch (RuntimeException exc) {
                 plane = new Plane(-1.0, -1.0, 0.0, "Unavailable", "Unavailable", "Unavailable", Double.MAX_VALUE, true);
@@ -166,11 +164,11 @@ public class Plane {
      * @return Closest plane
      */
     private static Plane getClosestPlane(ArrayList<Plane> planes) {
-        double min = planes.get(0).geodesicDistance;
+        double min = planes.get(0).EuclideanDistance;
         int minIndex = 0;
         for (int i = 0; i < planes.size(); i++) {
             if (!planes.get(i).grounded) {
-                double d = planes.get(i).geodesicDistance;
+                double d = planes.get(i).EuclideanDistance;
                 if (d < min) {
                     min = d;
                     minIndex = i;
@@ -191,7 +189,13 @@ public class Plane {
         API.setRequestMethod("GET");
         API.setDoOutput(true);
         API.setReadTimeout(55*1000);
-        API.connect();
+        try {
+            API.connect();
+        }
+        catch (UnknownHostException uhe) {
+            System.err.println("Couldn't open API");
+            System.exit(0);
+        }
         BufferedReader reader = new BufferedReader(new InputStreamReader(API.getInputStream()));
         String jsonString = reader.readLine();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -200,7 +204,7 @@ public class Plane {
 
     //Computes euclidean distance between two pairs of coordinates
     private static double euclideanDistance(double origLat, double origLong, double destLat, double destLong) {
-        return Math.sqrt(Math.pow((destLat - origLat), 2) + Math.pow((destLong - origLong), 2));
+        return Math.sqrt(Math.pow((origLat - destLat), 2) + Math.pow((origLong - destLong), 2));
     }
 
 }
