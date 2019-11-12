@@ -18,6 +18,7 @@ public class Driver {
             if (scnr.hasNext("[nNsS]")) {
                 latCardinal = scnr.next().charAt(0);
                 if (Character.toLowerCase(latCardinal) == 's') {
+                    //TODO: fix this
                     latitude = -latitude;
                 }
             }
